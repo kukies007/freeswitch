@@ -1986,6 +1986,24 @@ static switch_status_t sofia_receive_message(switch_core_session_t *session, swi
 						to_tag = switch_channel_get_variable(rchannel, "sip_from_tag");
 					}
 
+					/* SKFIX: simplify REFER tags */
+					if (switch_channel_var_true(channel, "SKFIX_SIMPLIFY_REFER_TAGS")) {
+						private_object_t *rtech_pvt = switch_core_session_get_private(rsession);
+						switch_log_printf(SWITCH_CHANNEL_SESSION_LOG(session), SWITCH_LOG_NOTICE,
+										  "SKFIX: uuid_simplify() REFER tags\n");
+						to_tag = nta_leg_get_rtag(nua_get_dialog_state_leg(rtech_pvt->nh));
+						from_tag = nta_leg_get_tag(nua_get_dialog_state_leg(rtech_pvt->nh));
+					} else {
+						const char *v = switch_channel_get_variable(channel, "SKFIX_SIMPLIFY_REFER_TAGS");
+						if (!strcasecmp(v, "reverse")) {
+							private_object_t *rtech_pvt = switch_core_session_get_private(rsession);
+							switch_log_printf(SWITCH_CHANNEL_SESSION_LOG(session), SWITCH_LOG_NOTICE,
+											  "SKFIX: uuid_simplify() REFER tags (reverse)\n");
+							from_tag = nta_leg_get_rtag(nua_get_dialog_state_leg(rtech_pvt->nh));
+							to_tag = nta_leg_get_tag(nua_get_dialog_state_leg(rtech_pvt->nh));
+						}
+					}
+
 					switch_core_session_rwunlock(rsession);
 				}
 			}
